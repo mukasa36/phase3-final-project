@@ -1,5 +1,3 @@
-# modules.py
-
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,17 +19,6 @@ class FoodItem(Base):
     name = Column(String)
     description = Column(String)
     price = Column(Float)
-
-class CartItem(Base):
-    __tablename__ = 'cart_items'
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    food_id = Column(Integer, ForeignKey('food_items.id'))
-    quantity = Column(Integer, default=1)
-
-    user = relationship("User", back_populates="cart_items")
-    food_item = relationship("FoodItem")
 
 class Order(Base):
     __tablename__ = 'orders'
@@ -56,12 +43,19 @@ class OrderItem(Base):
     order = relationship("Order", back_populates="order_items")
     food_item = relationship("FoodItem")
 
-# Create a SQLAlchemy engine and session
-engine = create_engine('sqlite:///restaurant.db')
-Session = sessionmaker(bind=engine)
+def create_database():
+    # Create a SQLAlchemy engine and session
+    engine = create_engine('sqlite:///finalproject.db')
 
-# Add relationships to User, CartItem, and OrderItem
-User.cart_items = relationship("CartItem", back_populates="user")
-User.orders = relationship("Order", back_populates="user")
-Order.order_items = relationship("OrderItem", back_populates="order")
-FoodItem.order_items = relationship("OrderItem", back_populates="food_item")
+    # Check if the database already exists
+    if not engine.dialect.has_table(engine, User.__tablename__):
+        Base.metadata.create_all(engine)
+    
+    Session = sessionmaker(bind=engine)
+
+    # Add relationships to User and FoodItem
+    User.orders = relationship("Order", back_populates="user")
+    FoodItem.order_items = relationship("OrderItem", back_populates="food_item")
+
+if __name__ == "__main__":
+    create_database()
